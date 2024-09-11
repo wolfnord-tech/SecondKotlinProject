@@ -1,134 +1,112 @@
 package ru.wolfnord.secondkotlinproject
 
-import android.os.Bundle // Импортируем класс для работы с жизненным циклом Activity
-import androidx.activity.ComponentActivity // Импортируем класс для создания компонента Activity
-import androidx.activity.compose.setContent // Импортируем метод для установки содержимого Activity с помощью Compose
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.* // Импортируем контейнеры для компоновки. Включает в себя Column, Row и т.д.
-import androidx.compose.material3.* // Импортируем Material Design 3 компоненты, такие как Text и Button
-import androidx.compose.runtime.Composable // Импортируем аннотацию @Composable для функции, представляющей экран
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.navigation.NavController // Импортируем класс для управления навигацией
-import androidx.navigation.compose.* // Импортируем навигационные функции Compose
-import androidx.compose.ui.Alignment // Импортируем класс для выравнивания элементов
-import androidx.compose.ui.Modifier // Импортируем класс для модификации компоновки
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
-    // Метод, вызываемый при создании Активити
+    private lateinit var viewModel: MyViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState) // Вызов родительского метода для корректной работы
-        enableEdgeToEdge()
-        setContent { // Устанавливаем содержание Activity
-            MainScreen() // Вызываем функцию основного экрана приложения
+        super.onCreate(savedInstanceState) // Вызов метода родительского класса
+        enableEdgeToEdge() // Включаем отображение контента на границах экрана
+
+        viewModel = ViewModelProvider(this)[MyViewModel::class.java] // Инициализируем ViewModel
+
+        setContent {
+            MainScreen(viewModel) // Устанавливаем основной экран приложения
         }
     }
 }
 
 // Главный экран приложения
 @Composable
-fun MainScreen() {
-    // Создаем экземпляр NavController для управления навигацией между экранами
-    val navController = rememberNavController()
-    // Настраиваем NavHost для управления навигацией
-    NavHost(navController, startDestination = "screen1") { // Navigation, если много экранов
-        // Определяем первый экран
-        composable("screen1") { Screen1(navController) }
-        // Определяем второй экран
-        composable("screen2") { Screen2(navController) }
-        // Определяем третий экран
-        composable("screen3") { Screen3(navController) }
+fun MainScreen(viewModel: MyViewModel) {
+    val navController = rememberNavController() // Создаем NavController для навигации
+    NavHost(navController, startDestination = "screen1") {
+        composable("screen1") { Screen1(navController, viewModel) } // Первый экран
+        composable("screen2") { Screen2(navController, viewModel) } // Второй экран
+        composable("screen3") { Screen3(navController, viewModel) } // Третий экран
     }
 }
 
 // Экран 1: "Welcome Screen"
 @Composable
-fun Screen1(navController: NavController) {
-    // Состояние для хранение текущего значения счетчика
-    var count by remember { mutableIntStateOf(0) } // Приравнивать к равно = больше функций
+fun Screen1(navController: NavController, viewModel: MyViewModel) {
+    val count by viewModel.count.observeAsState() // Наблюдаем за счетом
 
-    // Используем Column для вертикальной компоновки элементов
     Column(
-        modifier = Modifier.fillMaxSize(), // Занимаем всю доступную площадь = wrapContent (Удобно при работе с текстом)
-        horizontalAlignment = Alignment.CenterHorizontally, // Центрируем элементы по горизонтали
-        verticalArrangement = Arrangement.Center // Центрируем элементы по вертикали
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        // Текст на экране
         Text(text = "Welcome to Screen 1", style = MaterialTheme.typography.titleLarge)
-        // Текущий счетчик отображается как текст
         Text(text = "Count: $count", style = MaterialTheme.typography.bodyLarge)
-        // Кнопка для увеличения счетчика
-        Button(onClick = { count++ }) {
-            Text("Increase Count") // Текст на кнопке
+        Button(onClick = { viewModel.increaseCount() }) {
+            Text("Increase Count")
         }
-
-        // Кнопка, переходящая на экран 2
         Button(onClick = { navController.navigate("screen2") }) {
-            Text("Go to Screen 2") // Текст на кнопке
+            Text("Go to Screen 2")
         }
     }
 }
 
 // Экран 2: "Profile Screen"
 @Composable
-fun Screen2(navController: NavController) {
-    var name by remember { mutableStateOf("") }
-    // Используем Column для вертикальной компоновки элементов
+fun Screen2(navController: NavController, viewModel: MyViewModel) {
+    val name by viewModel.name.observeAsState() // Наблюдаем за именем
+
     Column(
-        modifier = Modifier.fillMaxSize(), // Занимаем всю доступную площадь
-        horizontalAlignment = Alignment.CenterHorizontally, // Центрируем элементы по горизонтали
-        verticalArrangement = Arrangement.Center // Центрируем элементы по вертикали
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        // Текст на экране
         Text(text = "This is Screen 2 - Your Profile", style = MaterialTheme.typography.titleLarge)
-
-        // Поле для ввода имени
         TextField(
-            value = name, // Текущее значение поля
-            onValueChange = { name = it }, // Обновление имени при вводе
-            label = { Text("Enter your name") } // Метка для текстового поля
+            value = name!!,
+            onValueChange = { viewModel.setName(it) }, // Устанавливаем имя
+            label = { Text("Enter your name") }
         )
-
-        // Приветствие с введенным именем
         Text(text = "Hello, $name!", style = MaterialTheme.typography.bodyLarge)
-
-        // Кнопка, переходящая на экран 3
         Button(onClick = { navController.navigate("screen3") }) {
-            Text("Go to Screen 3") // Текст на кнопке
+            Text("Go to Screen 3")
         }
     }
 }
 
 // Экран 3: "Settings Screen"
 @Composable
-fun Screen3(navController: NavController) {
-    var isNotificationsEnabled by remember { mutableStateOf(false) }
+fun Screen3(navController: NavController, viewModel: MyViewModel) {
+    val isNotificationsEnabled by viewModel.state.observeAsState() // Наблюдаем за состоянием уведомлений
 
-    // Используем Column для вертикальной компоновки элементов
     Column(
-        modifier = Modifier.fillMaxSize(), // Занимает всю доступную площадь
-        horizontalAlignment = Alignment.CenterHorizontally, // Центрируем элементы по горизонтали
-        verticalArrangement = Arrangement.Center // Центрируем элементы по вертикали
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        // Текст на экране
         Text(text = "Settings Screen - Adjust Preferences", style = MaterialTheme.typography.titleLarge)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Текст рядом с переключателем
             Text("Enable Notifications: ")
-            // Переключатель для управления уведомлениями
             Switch(
-                checked = isNotificationsEnabled, // Текущее состояние переключателя
-                onCheckedChange = { isNotificationsEnabled = it } // Обновления состояния уведомлений
+                checked = isNotificationsEnabled!!, // Текущее состояние переключателя
+                onCheckedChange = { viewModel.changeState() } // Переключаем состояние
             )
         }
-        // Текст, отображающий текущее состояние уведомлений
-        Text(text = if (isNotificationsEnabled) "Notification are enabled." else "Notifications are disabled.")
-        // Кнопка, переходящая на экран 1
+        Text(text = if (isNotificationsEnabled!!) "Notifications are enabled." else "Notifications are disabled.")
         Button(onClick = { navController.popBackStack() }) {
-            Text("Back to Screen 2") // Текст на кнопке
+            Text("Back to Screen 2")
         }
     }
 }
