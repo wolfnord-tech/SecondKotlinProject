@@ -76,7 +76,7 @@ fun Screen1(navController: NavController) {
 @Composable
 fun Screen2(navController: NavController) {
     var name by remember { mutableStateOf("") }
-    // Используем Colomn для вертикальной компоновки элементов
+    // Используем Column для вертикальной компоновки элементов
     Column(
         modifier = Modifier.fillMaxSize(), // Занимаем всю доступную площадь
         horizontalAlignment = Alignment.CenterHorizontally, // Центрируем элементы по горизонтали
@@ -107,7 +107,7 @@ fun Screen2(navController: NavController) {
 fun Screen3(navController: NavController) {
     var isNotificationsEnabled by remember { mutableStateOf(false) }
 
-    // Используем Colomn для вертикальной компоновки элементов
+    // Используем Column для вертикальной компоновки элементов
     Column(
         modifier = Modifier.fillMaxSize(), // Занимает всю доступную площадь
         horizontalAlignment = Alignment.CenterHorizontally, // Центрируем элементы по горизонтали
